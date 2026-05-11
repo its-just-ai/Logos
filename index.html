@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Logos — A Learning App</title>
+
+  <!-- PWA -->
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Logos">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="theme-color" content="#0f1117">
+
+  <style>
+    /* ─── RESET & BASE ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f1117;
+      --surface:  #181c27;
+      --border:   #252a38;
+      --accent:   #c8a96e;
+      --accent2:  #7eb8c9;
+      --text:     #e8e4dc;
+      --muted:    #8a8678;
+      --correct:  #4caf7d;
+      --wrong:    #e05c5c;
+      --radius:   12px;
+      --font-head: 'Playfair Display', Georgia, serif;
+      --font-body: 'Source Serif 4', 'Georgia', serif;
+      --font-ui:   'DM Sans', system-ui, sans-serif;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bot: env(safe-area-inset-bottom);
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap');
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── LAYOUT ───────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ─── TOP BAR ──────────────────────────────────────────── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(var(--safe-top) + 12px) 20px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    #topbar .logo {
+      font-family: var(--font-head);
+      font-size: 1.3rem;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+    #topbar .subject-pill {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 100px;
+    }
+    #menu-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ─── SCREENS ──────────────────────────────────────────── */
+    .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .screen.active { display: flex; }
+
+    /* ─── HOME SCREEN ──────────────────────────────────────── */
+    #home-screen {
+      overflow-y: auto;
+      padding: 32px 20px calc(var(--safe-bot) + 24px);
+    }
+    .subject-header {
+      margin-bottom: 36px;
+    }
+    .subject-header .eyebrow {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .subject-header h1 {
+      font-family: var(--font-head);
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .subject-header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .progress-bar-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 32px;
+    }
+    .progress-bar-wrap .label {
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .progress-track {
+      height: 5px;
+      background: var(--border);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 100px;
+      transition: width 0.5s ease;
+    }
+
+    .units-label {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .unit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .unit-card:hover, .unit-card:active {
+      border-color: var(--accent);
+      background: #1d2232;
+    }
+    .unit-card.locked {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .unit-card.completed {
+      border-color: var(--correct);
+    }
+    .unit-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .unit-card.completed .unit-num {
+      border-color: var(--correct);
+      color: var(--correct);
+    }
+    .unit-card.available .unit-num {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .unit-info h3 {
+      font-family: var(--font-ui);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+    .unit-info p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .unit-badge {
+      margin-left: auto;
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 100px;
+      flex-shrink: 0;
+    }
+    .badge-done { background: rgba(76,175,125,0.15); color: var(--correct); }
+    .badge-new  { background: rgba(200,169,110,0.12); color: var(--accent); }
+    .badge-lock { background: var(--border); color: var(--muted); }
+
+    /* ─── LESSON SCREEN ────────────────────────────────────── */
+    #lesson-screen { overflow: hidden; }
+    #lesson-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 20px;
+      scroll-behavior: smooth;
+    }
+
+    .lesson-header {
+      margin-bottom: 28px;
+    }
+    .lesson-header .unit-tag {
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .lesson-header h2 {
+      font-family: var(--font-head);
+      font-size: clamp(1.3rem, 4vw, 1.8rem);
+      line-height: 1.25;
+      color: var(--text);
+    }
+
+    /* Content blocks */
+    .content-block {
+      margin-bottom: 24px;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 0.4s ease forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .content-block:nth-child(2) { animation-delay: 0.07s; }
+    .content-block:nth-child(3) { animation-delay: 0.14s; }
+    .content-block:nth-child(4) { animation-delay: 0.21s; }
+    .content-block:nth-child(5) { animation-delay: 0.28s; }
+    .content-block:nth-child(6) { animation-delay: 0.35s; }
+
+    .content-block p {
+      color: #ccc8c0;
+      font-size: 1rem;
+      line-height: 1.8;
+    }
+    .content-block p + p { margin-top: 14px; }
+
+    .content-block h3 {
+      font-family: var(--font-head);
+      font-size: 1.15rem;
+      color: var(--text);
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
+    .callout {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 16px 18px;
+    }
+    .callout.blue { border-color: var(--accent2); }
+    .callout .callout-label {
+      font-family: var(--font-ui);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .callout.blue .callout-label { color: var(--accent2); }
+    .callout p { color: var(--text); font-size: 0.95rem; }
+
+    .definition-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+    }
+    .definition-box .term {
+      font-family: var(--font-ui);
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+    .definition-box p {
+      color: #ccc8c0;
+      font-size: 0.92rem;
+    }
+
+    .elements-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .element-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .element-item .el-name {
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.82rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .element-item p {
+      font-size: 0.78rem !important;
+      line-height: 1.5 !important;
+      color: var(--muted) !important;
+    }
+
+    .standards-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .standard-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .bias-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 10px;
+    }
+    .bias-card .bias-name {
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--accent2);
+      margin-bottom: 4px;
+    }
+    .bias-card p {
+      font-size: 0.83rem !important;
+      line-height: 1.55 !important;
+      color: #aaa8a0 !important;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .sys-card {
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+    .sys-card.s1 { background: #1a1822; border-color: #e05c5c55; }
+    .sys-card.s2 { background: #131b1f; border-color: #7eb8c955; }
+    .sys-card .sys-label {
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .sys-card.s1 .sys-label { color: #e05c5c; }
+    .sys-card.s2 .sys-label { color: var(--accent2); }
+    .sys-card ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sys-card ul li {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .sys-card ul li:last-child { border-bottom: none; }
+
+    .source-note {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    /* Lesson nav bottom */
+    #lesson-nav {
+      display: flex;
+      gap: 10px;
+      padding: 14px 20px calc(var(--safe-bot) + 14px);
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+    #lesson-nav button {
+      flex: 1;
+      padding: 13px;
+      border-radius: var(--radius);
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid var(--border);
+    }
+    #btn-back-lesson {
+      background: var(--surface);
+      color: var(--muted);
+    }
+    #btn-next-lesson {
+      background: var(--accent);
+      color: #0f1117;
+      border-color: var(--accent);
+    }
+    #btn-next-lesson:hover { filter: brightness(1.1); }
+    #btn-next-lesson:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ─── QUIZ SCREEN ──────────────────────────────────────── */
+    #quiz-screen { overflow: hidden; }
+    #quiz-inner {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 20px;
+    }
+
+    .quiz-progress {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 28px;
+    }
+    .quiz-dot {
+      flex: 1;
+      height: 4px;
+      border-radius: 100px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .quiz-dot.done { background: var(--correct); }
+    .quiz-dot.current { background: var(--accent); }
+
+    .q-num {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .q-text {
+      font-family: var(--font-head);
+      font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+      line-height: 1.4;
+      color: var(--text);
+      margin-bottom: 28px;
+    }
+    .q-scenario {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      color: #b0aca4;
+      line-height: 1.65;
+      font-style: italic;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .option-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      width: 100%;
+    }
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: #1d2232;
+    }
+    .option-btn.selected-correct {
+      border-color: var(--correct);
+      background: rgba(76,175,125,0.1);
+      color: var(--correct);
+    }
+    .option-btn.selected-wrong {
+      border-color: var(--wrong);
+      background: rgba(224,92,92,0.1);
+      color: var(--wrong);
+    }
+    .option-btn.reveal-correct {
+      border-color: var(--correct);
+      background: rgba(76,175,125,0.07);
+    }
+    .option-btn:disabled { cursor: not-allowed; }
+
+    .feedback-box {
+      margin-top: 18px;
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      animation: fadeUp 0.3s ease;
+    }
+    .feedback-box.correct { background: rgba(76,175,125,0.1); border: 1px solid rgba(76,175,125,0.3); }
+    .feedback-box.wrong   { background: rgba(224,92,92,0.1);  border: 1px solid rgba(224,92,92,0.3); }
+    .feedback-box .fb-label {
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .feedback-box.correct .fb-label { color: var(--correct); }
+    .feedback-box.wrong   .fb-label { color: var(--wrong); }
+    .feedback-box p {
+      font-size: 0.88rem;
+      color: #ccc8c0;
+      line-height: 1.6;
+    }
+
+    #quiz-next-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 18px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #0f1117;
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: none;
+      transition: filter 0.2s;
+    }
+    #quiz-next-btn:hover { filter: brightness(1.1); }
+
+    /* ─── RESULTS SCREEN ───────────────────────────────────── */
+    #results-screen {
+      overflow-y: auto;
+      padding: 40px 24px calc(var(--safe-bot) + 24px);
+      align-items: center;
+      text-align: center;
+    }
+    .results-icon {
+      font-size: 3.5rem;
+      margin-bottom: 16px;
+    }
+    .results-score {
+      font-family: var(--font-head);
+      font-size: 3rem;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .results-label {
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .results-summary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 100%;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .results-summary h3 {
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-row .rr-q { color: #b0aca4; flex: 1; padding-right: 12px; line-height: 1.4; }
+    .result-row .rr-mark { font-size: 1.1rem; }
+    .results-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius);
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: filter 0.2s;
+      margin-bottom: 10px;
+    }
+    .results-btn.primary {
+      background: var(--accent);
+      color: #0f1117;
+      border: none;
+    }
+    .results-btn.secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .results-btn:hover { filter: brightness(1.1); }
+
+    /* ─── MENU OVERLAY ─────────────────────────────────────── */
+    #menu-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,16,0.85);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      animation: fadeIn 0.2s ease;
+    }
+    #menu-overlay.open { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .menu-sheet {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      padding: 20px 20px calc(var(--safe-bot) + 20px);
+    }
+    .menu-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 100px;
+      margin: 0 auto 20px;
+    }
+    .menu-sheet h3 {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .menu-subject {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--accent);
+      background: rgba(200,169,110,0.06);
+      margin-bottom: 10px;
+    }
+    .menu-subject .ms-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .menu-subject .ms-name {
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .menu-close {
+      margin-top: 18px;
+      width: 100%;
+      padding: 13px;
+      background: var(--border);
+      border: none;
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+  </style>
+
+</head>
+<body>
+<div id="app">
+
+  <!-- TOP BAR -->
+
+  <header id="topbar">
+    <span class="logo">Logos</span>
+    <span class="subject-pill" id="subject-pill">Critical Thinking</span>
+    <button id="menu-btn" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <!-- HOME SCREEN -->
+
+  <div id="home-screen" class="screen active">
+    <div class="subject-header">
+      <div class="eyebrow">Subject</div>
+      <h1>Developing Critical Thinking Skills</h1>
+      <p>A structured course grounded in cognitive science, philosophy, and educational research. Learn to think more clearly, reason more soundly, and decide more wisely.</p>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="label">
+        <span>Overall Progress</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="units-label">Units</div>
+    <div id="unit-list"></div>
+  </div>
+
+  <!-- LESSON SCREEN -->
+
+  <div id="lesson-screen" class="screen">
+    <div id="lesson-scroll">
+      <div class="lesson-header">
+        <div class="unit-tag" id="lesson-unit-tag"></div>
+        <h2 id="lesson-title"></h2>
+      </div>
+      <div id="lesson-body"></div>
+    </div>
+    <div id="lesson-nav">
+      <button id="btn-back-lesson">← Back</button>
+      <button id="btn-next-lesson">Continue →</button>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+
+  <div id="quiz-screen" class="screen">
+    <div id="quiz-inner">
+      <div class="quiz-progress" id="quiz-progress-dots"></div>
+      <div class="q-num" id="q-num"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-scenario" id="q-scenario" style="display:none"></div>
+      <div class="options-list" id="options-list"></div>
+      <div id="feedback-area"></div>
+      <button id="quiz-next-btn">Next Question →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+
+  <div id="results-screen" class="screen">
+    <div class="results-icon" id="results-icon">🎯</div>
+    <div class="results-score" id="results-score"></div>
+    <div class="results-label" id="results-label"></div>
+    <div class="results-summary">
+      <h3>Question Review</h3>
+      <div id="result-rows"></div>
+    </div>
+    <button class="results-btn primary" id="btn-retry">Retry Quiz</button>
+    <button class="results-btn secondary" id="btn-back-home">← Back to Units</button>
+  </div>
+
+</div><!-- #app -->
+
+<!-- MENU OVERLAY -->
+
+<div id="menu-overlay">
+  <div class="menu-sheet">
+    <div class="menu-handle"></div>
+    <h3>Subjects</h3>
+    <div class="menu-subject">
+      <div class="ms-dot"></div>
+      <span class="ms-name">Developing Critical Thinking Skills</span>
+    </div>
+    <p style="font-size:0.82rem; color:var(--muted); margin-top:8px;">More subjects will be added over time.</p>
+    <button class="menu-close" id="menu-close-btn">Close</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA — All content is grounded in cited research frameworks
+// Sources: Paul & Elder (2001, 2010); Kahneman (2011);
+//          Ennis (1987); Tversky & Kahneman (1974);
+//          Facione (1990); Abrami et al. (2008)
+// ═══════════════════════════════════════════════════════════════
+
+const UNITS = [
+  {
+    id: 'u1',
+    title: 'What Is Critical Thinking?',
+    desc: 'Definitions, scope, and why it matters for adults',
+    lessons: [
+      {
+        id: 'l1',
+        title: 'Defining Critical Thinking',
+        content: () => `
+          <div class="content-block">
+            <div class="callout">
+              <div class="callout-label">Scholarly Definition</div>
+              <p>"Critical thinking is that mode of thinking — about any subject, content, or problem — in which the thinker improves the quality of his or her thinking by skillfully taking charge of the structures inherent in thinking and imposing intellectual standards upon them."</p>
+            </div>
+            <p class="source-note">— Paul, R. & Elder, L. (2001). Critical Thinking: Tools for Taking Charge of Your Learning and Your Life.</p>
+          </div>
+          <div class="content-block">
+            <p>A second widely cited definition comes from Robert Ennis, one of the field's founding scholars:</p>
+            <div class="callout blue" style="margin-top:12px">
+              <div class="callout-label">Ennis (1987)</div>
+              <p>"Critical thinking is reasonable, reflective thinking that is focused on deciding what to believe or do."</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <h3>What these definitions share</h3>
+            <p>Both definitions frame critical thinking not as raw intelligence, but as a <em>discipline</em> — a set of skills and habits applied intentionally. This matters because research consistently shows that critical thinking <strong>can be explicitly taught and improved</strong> in adults, at any age.</p>
+            <p>It is not simply "being smart" or "thinking carefully." It involves specific cognitive moves: questioning assumptions, evaluating evidence, identifying inferences, and checking reasoning against standards of clarity and logic.</p>
+          </div>
+          <div class="content-block">
+            <h3>Why this is especially important for adults</h3>
+            <p>Adults make high-stakes decisions — financial, medical, relational, civic — that benefit directly from structured reasoning. Unlike children learning these skills in school, adults bring accumulated experience, which is both an asset (background knowledge) and a risk (entrenched assumptions and biases).</p>
+            <p>Research in andragogy (adult learning theory) emphasizes that adults learn best when instruction is immediately applicable to real problems — which is exactly what critical thinking instruction provides.</p>
+            <p class="source-note">Knowles, M. S. (1980). The Modern Practice of Adult Education. Cambridge Adult Education.</p>
+          </div>
+        `
+      },
+      {
+        id: 'l2',
+        title: 'The Three Components of the Paul-Elder Framework',
+        content: () => `
+          <div class="content-block">
+            <p>The Paul-Elder Critical Thinking Framework — developed by Richard Paul and Linda Elder at the Foundation for Critical Thinking — is one of the most widely adopted models in education and research. It organizes critical thinking into three interlocking parts:</p>
+          </div>
+          <div class="content-block">
+            <div class="definition-box">
+              <div class="term">1. Elements of Thought (Reasoning)</div>
+              <p>The fundamental building blocks that are present in any act of thinking. Every time we think about something, all eight elements are at work — though we may not be aware of them.</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <div class="definition-box">
+              <div class="term">2. Universal Intellectual Standards</div>
+              <p>Criteria we apply to evaluate the quality of our thinking across the elements. These standards apply regardless of domain — science, politics, personal decisions, or professional work.</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <div class="definition-box">
+              <div class="term">3. Intellectual Traits</div>
+              <p>Dispositions or virtues that develop through consistent practice of the standards. These traits distinguish a narrow, self-serving thinker from a fair-minded, disciplined one.</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <div class="callout">
+              <div class="callout-label">How They Connect</div>
+              <p>When you <strong>habitually apply the intellectual standards</strong> (step 2) <strong>to the elements of your thinking</strong> (step 1), you gradually develop the <strong>intellectual traits</strong> (step 3) of a skilled critical thinker.</p>
+            </div>
+            <p class="source-note">Paul, R. & Elder, L. (2010). The Miniature Guide to Critical Thinking Concepts and Tools. Foundation for Critical Thinking Press.</p>
+          </div>
+        `
+      }
+    ],
+    quiz: [
+      {
+        q: 'According to Robert Ennis (1987), critical thinking is best defined as:',
+        options: [
+          'Using intelligence to solve difficult problems quickly',
+          'Reasonable, reflective thinking focused on deciding what to believe or do',
+          'Memorizing established facts and applying them to new situations',
+          'Thinking that challenges every assumption without exception'
+        ],
+        correct: 1,
+        feedback: 'Ennis defined critical thinking as "reasonable, reflective thinking that is focused on deciding what to believe or do." The key words are "reasonable" (grounded in logic), "reflective" (self-aware), and "focused on deciding" (action-oriented).'
+      },
+      {
+        q: 'In the Paul-Elder framework, the three components of critical thinking are:',
+        options: [
+          'Intelligence, memory, and creativity',
+          'Reading, writing, and arithmetic',
+          'Elements of thought, intellectual standards, and intellectual traits',
+          'Observation, hypothesis, and conclusion'
+        ],
+        correct: 2,
+        feedback: 'Paul and Elder organize critical thinking into three parts: the elements of thought (the structure of reasoning), intellectual standards (criteria for evaluating reasoning quality), and intellectual traits (virtues developed through practice).'
+      },
+      {
+        q: 'Research on teaching critical thinking to adults shows that:',
+        options: [
+          'Adults over 30 cannot substantially improve their critical thinking skills',
+          'Critical thinking is innate and cannot be taught',
+          'Critical thinking can be explicitly taught and improved through instruction',
+          'Only general intelligence training improves critical thinking'
+        ],
+        correct: 2,
+        feedback: 'Multiple research reviews (including Abrami et al., 2008, which analyzed 117 studies) confirm that explicit instruction significantly improves critical thinking skills in adults. Age is not a barrier.'
+      }
+    ]
+  },
+
+  {
+    id: 'u2',
+    title: 'The 8 Elements of Thought',
+    desc: 'The structural components present in all reasoning',
+    lessons: [
+      {
+        id: 'l3',
+        title: 'Understanding the Elements of Reasoning',
+        content: () => `
+          <div class="content-block">
+            <p>Paul and Elder identify eight universal elements present in every act of reasoning — from deciding what to eat for dinner to evaluating a scientific study. Becoming aware of these elements is the first step toward taking control of your thinking.</p>
+          </div>
+          <div class="content-block">
+            <div class="elements-grid">
+              <div class="element-item">
+                <div class="el-name">1. Purpose</div>
+                <p>The goal or objective your thinking is aimed at. All thinking serves some end.</p>
+              </div>
+              <div class="element-item">
+                <div class="el-name">2. Question at Issue</div>
+                <p>The problem or issue being addressed. Poorly defined questions lead to muddled thinking.</p>
+              </div>
+              <div class="element-item">
+                <div class="el-name">3. Information</div>
+                <p>The data, facts, observations, and evidence used in the reasoning.</p>
+              </div>
+              <div class="element-item">
+                <div class="el-name">4. Inferences</div>
+                <p>The conclusions drawn from the information. This is where reasoning can go wrong.</p>
+              </div>
+              <div class="element-item">
+                <div class="el-name">5. Concepts</div>
+                <p>The ideas, theories, or principles guiding the interpretation of information.</p>
+              </div>
+              <div class="element-item">
+                <div class="el-name">6. Assumptions</div>
+                <p>What is taken for granted — often unexamined — that shapes the reasoning.</p>
+              </div>
+              <div class="element-item">
+                <div class="el-name">7. Implications</div>
+                <p>The consequences that follow if the reasoning is correct. What would it mean?</p>
+              </div>
+              <div class="element-item">
+                <div class="el-name">8. Point of View</div>
+                <p>The perspective or frame of reference from which the reasoning proceeds.</p>
+              </div>
+            </div>
+            <p class="source-note" style="margin-top:10px">Paul, R. & Elder, L. (2001). Critical Thinking: Tools for Taking Charge of Your Learning and Your Life.</p>
+          </div>
+          <div class="content-block">
+            <h3>Why assumptions are especially important</h3>
+            <p>Assumptions are the most commonly overlooked element. They operate in the background of our thinking — so familiar that we treat them as facts rather than claims. Skilled critical thinkers actively surface and examine their assumptions.</p>
+            <div class="callout" style="margin-top:12px">
+              <div class="callout-label">Example</div>
+              <p>If you believe "working harder always leads to more success," this assumption shapes how you interpret failure (you blame effort, not circumstances) and how you give advice to others. The assumption itself may be worth questioning.</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'l4',
+        title: 'Applying the Elements: A Worked Example',
+        content: () => `
+          <div class="content-block">
+            <p>Let's apply all eight elements to a real-world scenario to make them concrete.</p>
+            <div class="callout blue" style="margin-top:12px">
+              <div class="callout-label">Scenario</div>
+              <p>You read a news article claiming that a new diet leads to significant weight loss. Should you try it?</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <div class="bias-card">
+              <div class="bias-name">Purpose →</div>
+              <p>To decide whether the diet is worth adopting — ideally to improve health, not just appearance.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Question at Issue →</div>
+              <p>Is the evidence for this diet's effectiveness reliable and applicable to me specifically?</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Information →</div>
+              <p>Who funded the study? How large was the sample? Was there a control group? Over what time period?</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Inferences →</div>
+              <p>The article concludes the diet works — but is this inference supported by the actual data, or just marketing claims?</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Concepts →</div>
+              <p>What do we mean by "significant weight loss"? 1 lb? 20 lbs? Over what timeframe?</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Assumptions →</div>
+              <p>Am I assuming the study's participants are similar to me? That weight loss is the right goal?</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Implications →</div>
+              <p>If the diet is effective but restrictive, can I sustain it? What happens when I stop?</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Point of View →</div>
+              <p>Is the article written from a neutral scientific perspective or a commercial one? What's mine?</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <div class="callout">
+              <div class="callout-label">Key Takeaway</div>
+              <p>This kind of structured analysis takes practice. The goal is not paralysis — it's proportionate scrutiny: asking the right questions before acting on information that affects you.</p>
+            </div>
+          </div>
+        `
+      }
+    ],
+    quiz: [
+      {
+        q: 'Which element of thought refers to what is taken for granted — often unconsciously — in a line of reasoning?',
+        options: ['Inferences', 'Implications', 'Assumptions', 'Point of View'],
+        correct: 2,
+        feedback: 'Assumptions are what we take for granted without examination. They operate as silent premises. Identifying them is critical because faulty assumptions can invalidate an entire argument even if the logic is otherwise sound.'
+      },
+      {
+        q: 'A friend argues: "This supplement must work — my coworker lost 15 pounds taking it." Which element is most clearly missing from this reasoning?',
+        options: [
+          'Purpose — the goal is unclear',
+          'Information — one anecdote is not representative evidence',
+          'Point of View — we need more perspectives',
+          'Concepts — "work" is undefined'
+        ],
+        correct: 1,
+        feedback: 'This is an anecdotal inference. One person\'s result is not reliable information — it lacks a control group, sample size, and controls for other variables. The "information" element requires data, not just stories. (Concepts is also partially valid, but Information is the primary gap.)'
+      },
+      {
+        scenario: 'You are evaluating a company\'s proposal that claims their new software will "dramatically improve productivity." You ask: "What counts as productivity, and how will it be measured?"',
+        q: 'Which element of thought are you primarily examining?',
+        options: ['Assumptions', 'Concepts', 'Purpose', 'Implications'],
+        correct: 1,
+        feedback: 'You are interrogating the Concept of "productivity." Concepts are the ideas and definitions that give meaning to the information. Vague or slippery concepts can disguise weak reasoning.'
+      }
+    ]
+  },
+
+  {
+    id: 'u3',
+    title: 'Intellectual Standards',
+    desc: 'Criteria for evaluating the quality of reasoning',
+    lessons: [
+      {
+        id: 'l5',
+        title: 'The Universal Intellectual Standards',
+        content: () => `
+          <div class="content-block">
+            <p>Once you can identify the elements of reasoning, you need a way to evaluate their quality. Paul and Elder propose a set of <strong>Universal Intellectual Standards</strong> — criteria that apply to good reasoning in any domain.</p>
+            <div class="standards-list" style="margin-top:14px">
+              <span class="standard-pill">Clarity</span>
+              <span class="standard-pill">Accuracy</span>
+              <span class="standard-pill">Precision</span>
+              <span class="standard-pill">Relevance</span>
+              <span class="standard-pill">Depth</span>
+              <span class="standard-pill">Breadth</span>
+              <span class="standard-pill">Logic</span>
+              <span class="standard-pill">Significance</span>
+              <span class="standard-pill">Fairness</span>
+            </div>
+            <p class="source-note" style="margin-top:10px">Paul, R. & Elder, L. (1997). Foundation for Critical Thinking.</p>
+          </div>
+          <div class="content-block">
+            <h3>The most foundational standard: Clarity</h3>
+            <div class="callout">
+              <div class="callout-label">Paul & Elder</div>
+              <p>"Clarity is the gateway standard. If a statement is unclear, we cannot determine whether it is accurate or relevant. In fact, we cannot tell anything about it because we don't yet know what it is saying."</p>
+            </div>
+            <p style="margin-top:12px">A question to ask: <em>"Could you elaborate or give an example?"</em></p>
+          </div>
+          <div class="content-block">
+            <h3>Accuracy vs. Precision</h3>
+            <p>These are related but distinct. A statement can be <strong>accurate</strong> (true) but not <strong>precise</strong> (specific enough to be useful).</p>
+            <div class="callout blue" style="margin-top:12px">
+              <div class="callout-label">Example</div>
+              <p>"Exercise is good for you" is accurate — but it is not precise. How much? What kind? For whom? Precision demands specifics.</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <h3>Depth and Breadth</h3>
+            <p><strong>Depth</strong> asks: does this address the actual complexity of the problem? Superficial thinking ignores nuance.</p>
+            <p><strong>Breadth</strong> asks: have we considered other relevant perspectives or lines of reasoning? Narrow thinking ignores alternatives.</p>
+            <p>A politician who proposes a simple solution to a complex social problem may satisfy neither standard — the solution is shallow (lacks depth) and ignores competing perspectives (lacks breadth).</p>
+          </div>
+          <div class="content-block">
+            <h3>Logic</h3>
+            <p>Does the reasoning hold together? Do the conclusions actually follow from the premises? Logical validity is distinct from factual accuracy — a conclusion can follow logically from false premises, or fail to follow from true ones.</p>
+            <div class="callout" style="margin-top:12px">
+              <div class="callout-label">Questions to Ask</div>
+              <p>Does this conclusion actually follow from the evidence? Is there a contradiction between what was said earlier and what's being claimed now?</p>
+            </div>
+          </div>
+        `
+      }
+    ],
+    quiz: [
+      {
+        q: 'Paul and Elder describe clarity as "the gateway standard." What does this mean?',
+        options: [
+          'Clarity is more important than accuracy in most situations',
+          'Without clarity, you cannot determine whether a statement meets any other standard',
+          'Clarity is the easiest standard to achieve',
+          'A clear statement is automatically a correct one'
+        ],
+        correct: 1,
+        feedback: 'If you cannot understand what is being said, you cannot evaluate it for accuracy, relevance, or logic. Clarity is the precondition for applying all other standards. An unclear claim blocks all further evaluation.'
+      },
+      {
+        scenario: 'A manager says: "We need to improve communication around here." You respond by asking: "Could you give a specific example of what poor communication looks like, and what improvement would look like in practice?"',
+        q: 'Which two intellectual standards are you primarily applying?',
+        options: [
+          'Logic and Fairness',
+          'Breadth and Significance',
+          'Clarity and Precision',
+          'Accuracy and Relevance'
+        ],
+        correct: 2,
+        feedback: 'You are asking for Clarity (what does "improve communication" actually mean?) and Precision (give a specific, concrete example). Both are needed to move from a vague complaint to an actionable problem.'
+      },
+      {
+        q: 'A statement can be accurate but not precise. Which of the following best illustrates this distinction?',
+        options: [
+          '"The Earth orbits the Sun" — accurate and precise',
+          '"Some medications have side effects" — accurate, but too vague to be clinically useful',
+          '"The economy is bad" — neither accurate nor precise',
+          '"Water boils at 100°C at sea level" — precise but inaccurate'
+        ],
+        correct: 1,
+        feedback: '"Some medications have side effects" is true (accurate), but far too vague (imprecise) to guide any medical decision. Precision would require specifying which medication, what side effects, at what frequency, in which populations.'
+      }
+    ]
+  },
+
+  {
+    id: 'u4',
+    title: 'System 1 & System 2 Thinking',
+    desc: 'How your brain processes information — and where it goes wrong',
+    lessons: [
+      {
+        id: 'l6',
+        title: 'Two Systems of Thought',
+        content: () => `
+          <div class="content-block">
+            <p>Psychologist Daniel Kahneman, drawing on decades of research with Amos Tversky, describes human cognition as operating through two distinct modes:</p>
+            <div class="two-col" style="margin-top:14px">
+              <div class="sys-card s1">
+                <div class="sys-label">System 1</div>
+                <ul>
+                  <li>Fast & automatic</li>
+                  <li>Intuitive & effortless</li>
+                  <li>Emotional</li>
+                  <li>Pattern-based</li>
+                  <li>Always running</li>
+                  <li>Prone to bias</li>
+                </ul>
+              </div>
+              <div class="sys-card s2">
+                <div class="sys-label">System 2</div>
+                <ul>
+                  <li>Slow & deliberate</li>
+                  <li>Analytical & effortful</li>
+                  <li>Rule-following</li>
+                  <li>Conscious control</li>
+                  <li>Energy-intensive</li>
+                  <li>Can override System 1</li>
+                </ul>
+              </div>
+            </div>
+            <p class="source-note" style="margin-top:10px">Kahneman, D. (2011). Thinking, Fast and Slow. Farrar, Straus and Giroux.</p>
+          </div>
+          <div class="content-block">
+            <h3>System 1 is not bad — it is usually efficient</h3>
+            <p>Most of the time, System 1 works well. Recognizing a face, catching a ball, navigating a familiar route — these rely on fast, automatic processing that is highly adaptive. Problems arise when System 1 is applied to situations that require careful analysis.</p>
+          </div>
+          <div class="content-block">
+            <div class="callout">
+              <div class="callout-label">Classic Demonstration (Kahneman)</div>
+              <p>A bat and ball cost $1.10 together. The bat costs $1.00 more than the ball. How much does the ball cost?</p>
+            </div>
+            <p style="margin-top:12px">Most people answer 10 cents immediately — that is System 1. The correct answer is 5 cents (ball = 5¢, bat = $1.05, total = $1.10). System 2, engaged deliberately, catches the error.</p>
+          </div>
+          <div class="content-block">
+            <h3>Cognitive ease and the illusion of validity</h3>
+            <p>System 1 prefers familiar, fluent, easy-to-process information. When something feels easy to think about, we tend to believe it more readily — even if that ease is simply due to repetition or clarity of font. Kahneman calls this <em>cognitive ease</em>.</p>
+            <p>This explains why catchy slogans, repeated claims, and emotionally resonant stories can be persuasive independent of their truth. Critical thinking requires deliberately disengaging from this ease.</p>
+          </div>
+          <div class="content-block">
+            <h3>When to engage System 2</h3>
+            <p>The goal is not to use System 2 for everything — that would be exhausting and counterproductive. The skill lies in recognizing when the stakes, complexity, or unfamiliarity of a situation warrant deliberately slowing down and engaging analytical reasoning.</p>
+            <div class="callout blue" style="margin-top:12px">
+              <div class="callout-label">Triggers for System 2</div>
+              <p>High-stakes decisions. Novel situations. When your first response feels too easy. When you notice emotional intensity. When information comes from a motivated source.</p>
+            </div>
+          </div>
+        `
+      }
+    ],
+    quiz: [
+      {
+        q: 'In Kahneman\'s model, System 1 thinking is best characterized as:',
+        options: [
+          'Slow, deliberate, and rule-governed',
+          'Fast, automatic, and intuitive',
+          'Always accurate due to experience',
+          'Engaged only when solving mathematical problems'
+        ],
+        correct: 1,
+        feedback: 'System 1 is fast, automatic, and operates below conscious awareness. It is efficient for routine tasks but prone to systematic errors (biases) when applied to complex or novel problems requiring careful analysis.'
+      },
+      {
+        scenario: 'You are offered a job. The offer arrives in a clear, well-formatted letter with confident language. You feel positive about it immediately.',
+        q: 'What does Kahneman\'s concept of "cognitive ease" suggest about your positive feeling?',
+        options: [
+          'The positive feeling confirms the job is a good fit',
+          'The feeling may partly reflect fluency and presentation rather than the actual quality of the offer',
+          'Emotional responses should be trusted over analytical ones',
+          'The offer is likely fraudulent'
+        ],
+        correct: 1,
+        feedback: 'Cognitive ease means we associate fluent, clear, easy-to-process information with truth and goodness — even when the ease is caused by formatting and language quality rather than the content\'s actual merit. Critical thinking requires separating how something is presented from what it actually contains.'
+      },
+      {
+        q: 'The bat-and-ball problem illustrates that:',
+        options: [
+          'Most people are poor at basic arithmetic',
+          'Intuitive (System 1) answers can be confidently wrong; deliberate (System 2) checking corrects errors',
+          'System 2 is always slower but always right',
+          'Critical thinking is only needed for mathematics'
+        ],
+        correct: 1,
+        feedback: 'The problem shows that System 1 generates a confident, plausible-feeling wrong answer (10¢). The correct answer (5¢) requires engaging System 2 to check the intuition algebraically. This pattern appears across a wide range of judgment tasks documented by Kahneman and Tversky.'
+      }
+    ]
+  },
+
+  {
+    id: 'u5',
+    title: 'Cognitive Biases',
+    desc: 'Systematic errors in reasoning and how to counter them',
+    lessons: [
+      {
+        id: 'l7',
+        title: 'Heuristics and Bias: The Research Foundation',
+        content: () => `
+          <div class="content-block">
+            <p>Tversky and Kahneman's landmark 1974 paper, <em>Judgment Under Uncertainty: Heuristics and Biases</em>, demonstrated that people rely on mental shortcuts (heuristics) when making judgments. These shortcuts are often useful, but they produce predictable, systematic errors called <strong>cognitive biases</strong>.</p>
+            <p class="source-note">Tversky, A. & Kahneman, D. (1974). Judgment under uncertainty: Heuristics and biases. Science, 185(4157), 1124–1131.</p>
+          </div>
+          <div class="content-block">
+            <div class="callout">
+              <div class="callout-label">Important Distinction</div>
+              <p>Biases are not the result of low intelligence or moral failure. They are systematic patterns that affect virtually everyone — including experts. Awareness is the first, necessary step toward mitigation.</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <h3>Core Biases to Know</h3>
+            <div class="bias-card">
+              <div class="bias-name">Confirmation Bias</div>
+              <p>The tendency to seek, favor, and remember information that confirms what we already believe, while discounting contradictory evidence. Widely considered one of the most pervasive biases in human reasoning.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Availability Heuristic</div>
+              <p>Judging the likelihood of events based on how easily examples come to mind. Plane crashes feel more dangerous than car accidents because they receive more news coverage — even though statistically, driving is far riskier per mile traveled.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Anchoring Bias</div>
+              <p>Over-relying on the first piece of information encountered (the "anchor") when making estimates or decisions. In negotiations, the first number mentioned disproportionately influences the outcome.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Representativeness Heuristic</div>
+              <p>Judging probability by similarity to a prototype rather than by base rates. In Tversky & Kahneman's "Linda problem," people judged a detailed description as more probable than a simpler, statistically more likely one.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Optimism Bias</div>
+              <p>The tendency to overestimate the likelihood of positive outcomes and underestimate costs and risks. Kahneman identifies this as "perhaps the most significant of the cognitive biases." It drives the "planning fallacy" — chronic underestimation of project time and cost.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Sunk Cost Fallacy</div>
+              <p>Continuing an endeavor because of already-invested resources (time, money, effort) rather than its future value. The rational question is always: "What are the future costs and benefits from this point forward?"</p>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 'l8',
+        title: 'Countering Cognitive Biases: Evidence-Based Strategies',
+        content: () => `
+          <div class="content-block">
+            <p>Research shows that simply knowing about biases does not automatically eliminate them. However, specific strategies — applied consistently — can meaningfully reduce their impact.</p>
+            <p class="source-note">Morewedge, C.K. et al. (2015). Debiasing decisions. Policy Insights from the Behavioral and Brain Sciences, 2(1).</p>
+          </div>
+          <div class="content-block">
+            <div class="bias-card">
+              <div class="bias-name">Strategy 1: Consider the Opposite</div>
+              <p>Deliberately generate reasons why your current belief might be wrong. Research by Lord, Lepper & Preston (1984) found this reduces confirmation bias more effectively than simply being told to "be objective."</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Strategy 2: Base Rate Thinking</div>
+              <p>Before evaluating a specific case, ask: "What is the base rate for this class of events?" This counters the availability heuristic and representativeness errors by grounding estimates in statistics rather than memorable examples.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Strategy 3: Pre-mortem Analysis</div>
+              <p>Before committing to a decision, imagine it is one year in the future and the plan has failed. Ask: "What went wrong?" Research by Klein (2007) shows this technique surfaces overlooked risks and reduces overconfidence.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Strategy 4: Slow Down Deliberately</div>
+              <p>For high-stakes decisions, insert a forced pause before finalizing. This gives System 2 the opportunity to review System 1's initial judgment. Even brief delays reduce impulsive, bias-driven decisions.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Strategy 5: Seek Disconfirming Evidence</div>
+              <p>Actively look for information that would prove you wrong. Ask: "What would I need to see to change my mind?" If you cannot answer this, you may be engaging in motivated reasoning rather than critical thinking.</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <div class="callout">
+              <div class="callout-label">Key Principle</div>
+              <p>The goal is not to eliminate intuition — it is to develop the metacognitive habit of knowing <em>when</em> to trust it and when to subject it to deliberate scrutiny.</p>
+            </div>
+          </div>
+        `
+      }
+    ],
+    quiz: [
+      {
+        scenario: 'After investing 6 months and significant money into a business idea, you receive data showing the market is shrinking and the business is unlikely to be profitable. You find yourself thinking: "We\'ve put so much into this — we can\'t quit now."',
+        q: 'Which cognitive bias is most clearly driving this reasoning?',
+        options: [
+          'Availability Heuristic',
+          'Confirmation Bias',
+          'Sunk Cost Fallacy',
+          'Anchoring Bias'
+        ],
+        correct: 2,
+        feedback: 'The Sunk Cost Fallacy is the tendency to continue an endeavor because of past investment, rather than evaluating its future value. Rationally, past costs are irretrievable — only future costs and benefits are relevant to the decision.'
+      },
+      {
+        q: 'Research by Tversky and Kahneman shows the availability heuristic causes people to:',
+        options: [
+          'Always prefer familiar choices',
+          'Judge event likelihood based on how easily examples come to mind, not statistical frequency',
+          'Anchor their estimates to the last number they heard',
+          'Overestimate their own intelligence'
+        ],
+        correct: 1,
+        feedback: 'The availability heuristic means we judge probability by how easily an example comes to mind. Dramatic, memorable events (plane crashes, shark attacks) feel more common than statistics support, because they are cognitively available.'
+      },
+      {
+        scenario: 'You believe a particular investment strategy is sound. When you search for information about it, you find yourself clicking on articles that support it and skipping over critical ones.',
+        q: 'The most effective research-backed counter to this pattern is to:',
+        options: [
+          'Trust your original judgment — you researched it already',
+          'Deliberately seek out and seriously engage with the strongest arguments against your position',
+          'Find more confirming sources to build confidence',
+          'Avoid reading about the investment at all'
+        ],
+        correct: 1,
+        feedback: 'Research supports "considering the opposite" and actively seeking disconfirming evidence as an effective counter to confirmation bias. The key test: "What would I need to see to change my mind?" If you cannot answer this, you are engaging in motivated reasoning.'
+      }
+    ]
+  },
+
+  {
+    id: 'u6',
+    title: 'Intellectual Traits & Daily Application',
+    desc: 'The virtues of a critical thinker and applying them in life',
+    lessons: [
+      {
+        id: 'l9',
+        title: 'Intellectual Traits: The Character of a Critical Thinker',
+        content: () => `
+          <div class="content-block">
+            <p>According to Paul and Elder, the consistent application of intellectual standards to the elements of reasoning — over time — produces <strong>intellectual traits</strong>: stable dispositions that characterize a well-developed critical thinker.</p>
+            <p>These are not personality traits one is born with. They are developed through deliberate practice.</p>
+          </div>
+          <div class="content-block">
+            <div class="bias-card">
+              <div class="bias-name">Intellectual Humility</div>
+              <p>Recognizing the limits of one's knowledge and the ways one's background, biases, and emotions may distort reasoning. It does not mean lacking confidence — it means holding beliefs proportionally to evidence.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Intellectual Courage</div>
+              <p>Willingness to examine ideas that challenge deeply held beliefs, regardless of discomfort. Research shows that humans have strong motivated reasoning — we resist conclusions that conflict with identity or group membership. Courage is required to override this.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Intellectual Empathy</div>
+              <p>The ability to reconstruct the reasoning of others — including those one disagrees with — with genuine understanding, not caricature. This requires temporarily setting aside one's own perspective.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Intellectual Integrity</div>
+              <p>Applying the same evaluative standards to one's own reasoning as to others'. Avoiding the double standard of demanding rigor from opponents while accepting weak evidence for one's own views.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Intellectual Perseverance</div>
+              <p>Continuing to reason carefully through complex, difficult problems rather than settling for easy or premature conclusions. Complex problems resist simple answers.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Fair-mindedness</div>
+              <p>Treating all perspectives according to the same standards — not privileging one's own viewpoint without justification. Fair-minded thinkers follow the argument where it leads, even when inconvenient.</p>
+            </div>
+            <p class="source-note" style="margin-top:10px">Paul, R. & Elder, L. (2010). The Miniature Guide to Critical Thinking Concepts and Tools.</p>
+          </div>
+        `
+      },
+      {
+        id: 'l10',
+        title: 'Applying Critical Thinking in Daily Life',
+        content: () => `
+          <div class="content-block">
+            <p>The research on critical thinking instruction — including large-scale meta-analyses — consistently shows that <strong>transfer is the central challenge</strong>: skills learned in one context do not automatically apply in others. Active, deliberate practice across multiple domains is required.</p>
+            <p class="source-note">Abrami, P.C. et al. (2008). Instructional interventions affecting critical thinking skills and dispositions. Review of Educational Research, 78(4).</p>
+          </div>
+          <div class="content-block">
+            <h3>Four domains where critical thinking applies daily</h3>
+            <div class="bias-card">
+              <div class="bias-name">Consuming Information & Media</div>
+              <p>Before sharing or acting on news, ask: What is the source? What is their incentive? Is the claim supported by evidence or just assertion? Is this the full picture (breadth) or a cherry-picked excerpt?</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Personal Decisions</div>
+              <p>Apply the elements of thought: What is my actual purpose? What am I assuming? What information am I missing? What are the implications of each option? Run a pre-mortem.</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Evaluating Arguments from Others</div>
+              <p>Distinguish the argument from the person making it (avoid ad hominem). Reconstruct the strongest version of their position (intellectual empathy) before critiquing. Ask: what would it take for this to be true?</p>
+            </div>
+            <div class="bias-card">
+              <div class="bias-name">Self-Reflection</div>
+              <p>Regularly question your own reasoning: What assumptions am I making? Am I applying the same standards to my own views as to others'? What would a fair-minded person conclude from this evidence?</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <div class="callout">
+              <div class="callout-label">The Practical Goal</div>
+              <p>The aim is not to be skeptical of everything — which leads to paralysis — but to develop calibrated confidence: trusting well-supported conclusions while remaining genuinely open to revision when evidence warrants it.</p>
+            </div>
+          </div>
+          <div class="content-block">
+            <h3>A daily habit to develop</h3>
+            <p>Choose one belief or decision per day and apply the Paul-Elder framework to it. Identify its elements. Apply the standards. Notice what you had been assuming. This repeated practice — what cognitive scientists call deliberate practice — is what produces lasting change in thinking habits.</p>
+            <p class="source-note">Ericsson, K.A. et al. (1993). The role of deliberate practice in the acquisition of expert performance. Psychological Review, 100(3).</p>
+          </div>
+        `
+      }
+    ],
+    quiz: [
+      {
+        q: 'According to Paul and Elder, intellectual traits are:',
+        options: [
+          'Innate personality characteristics that cannot be changed',
+          'Dispositions developed through consistent, deliberate application of intellectual standards',
+          'Skills that transfer automatically once learned in any single context',
+          'The same as general intelligence'
+        ],
+        correct: 1,
+        feedback: 'Intellectual traits are developed, not innate. Paul and Elder describe them as the result of consistently applying intellectual standards to one\'s reasoning over time. They represent the "character" dimension of critical thinking.'
+      },
+      {
+        scenario: 'During a debate, you privately realize that your opponent has made a good point that undermines your position. You feel pressure to "win" and so dismiss the point without genuinely addressing it.',
+        q: 'Overcoming this resistance requires which intellectual trait?',
+        options: [
+          'Intellectual Perseverance',
+          'Intellectual Humility and Intellectual Courage',
+          'Intellectual Empathy',
+          'Fair-mindedness'
+        ],
+        correct: 1,
+        feedback: 'This requires both Intellectual Humility (acknowledging the limits of your position) and Intellectual Courage (being willing to concede a point despite social pressure to "win"). Research on motivated reasoning shows this is genuinely difficult and requires deliberate effort.'
+      },
+      {
+        q: 'Large-scale research on critical thinking instruction (Abrami et al., 2008) identifies what as the central challenge when developing these skills?',
+        options: [
+          'Adults learn more slowly than children',
+          'Transfer — skills learned in one context do not automatically apply in others',
+          'Critical thinking cannot be taught through formal instruction',
+          'The skills are too abstract to measure'
+        ],
+        correct: 1,
+        feedback: 'Abrami et al.\'s meta-analysis of 117 studies found that transfer is the key challenge: people often improve in the specific context of instruction but do not automatically apply the skills elsewhere. Deliberate practice across multiple, varied domains is required.'
+      }
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const state = {
+  completed: JSON.parse(localStorage.getItem('logos_completed') || '[]'),
+  currentUnit: null,
+  currentLessonIndex: 0,
+  currentQuiz: null,
+  currentQ: 0,
+  answers: [],
+  quizResults: null
+};
+
+function saveState() {
+  localStorage.setItem('logos_completed', JSON.stringify(state.completed));
+}
+
+function isCompleted(id) { return state.completed.includes(id); }
+function markCompleted(id) {
+  if (!isCompleted(id)) { state.completed.push(id); saveState(); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════════════════════════
+function renderHome() {
+  const list = document.getElementById('unit-list');
+  list.innerHTML = '';
+  let completedCount = 0;
+
+  UNITS.forEach((unit, i) => {
+    const done = isCompleted(unit.id);
+    if (done) completedCount++;
+    const available = i === 0 || isCompleted(UNITS[i-1].id);
+    const locked = !available && !done;
+
+    const card = document.createElement('div');
+    card.className = `unit-card ${done ? 'completed' : available ? 'available' : 'locked'}`;
+    card.innerHTML = `
+      <div class="unit-num">${done ? '✓' : i+1}</div>
+      <div class="unit-info">
+        <h3>${unit.title}</h3>
+        <p>${unit.desc}</p>
+      </div>
+      <span class="unit-badge ${done ? 'badge-done' : available ? 'badge-new' : 'badge-lock'}">
+        ${done ? 'Done' : available ? 'Start' : 'Locked'}
+      </span>
+    `;
+    if (!locked) {
+      card.addEventListener('click', () => openUnit(unit));
+    }
+    list.appendChild(card);
+  });
+
+  const pct = Math.round((completedCount / UNITS.length) * 100);
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  showScreen('home-screen');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LESSONS
+// ═══════════════════════════════════════════════════════════════
+function openUnit(unit) {
+  state.currentUnit = unit;
+  state.currentLessonIndex = 0;
+  showLesson();
+}
+
+function showLesson() {
+  const unit = state.currentUnit;
+  const lesson = unit.lessons[state.currentLessonIndex];
+  const isLast = state.currentLessonIndex === unit.lessons.length - 1;
+
+  document.getElementById('lesson-unit-tag').textContent = `Unit — ${unit.title}`;
+  document.getElementById('lesson-title').textContent = lesson.title;
+  document.getElementById('lesson-body').innerHTML = lesson.content();
+
+  const nextBtn = document.getElementById('btn-next-lesson');
+  nextBtn.textContent = isLast ? 'Take the Quiz →' : 'Continue →';
+
+  document.getElementById('lesson-scroll').scrollTop = 0;
+  showScreen('lesson-screen');
+}
+
+document.getElementById('btn-next-lesson').addEventListener('click', () => {
+  const unit = state.currentUnit;
+  if (state.currentLessonIndex < unit.lessons.length - 1) {
+    state.currentLessonIndex++;
+    showLesson();
+  } else {
+    startQuiz();
+  }
+});
+
+document.getElementById('btn-back-lesson').addEventListener('click', () => {
+  if (state.currentLessonIndex > 0) {
+    state.currentLessonIndex--;
+    showLesson();
+  } else {
+    renderHome();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════════════════════════
+function startQuiz() {
+  state.currentQuiz = state.currentUnit.quiz;
+  state.currentQ = 0;
+  state.answers = [];
+  renderQuestion();
+  showScreen('quiz-screen');
+}
+
+function renderQuestion() {
+  const quiz = state.currentQuiz;
+  const q = quiz[state.currentQ];
+  const total = quiz.length;
+
+  // Progress dots
+  const dots = document.getElementById('quiz-progress-dots');
+  dots.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'quiz-dot' + (i < state.currentQ ? ' done' : i === state.currentQ ? ' current' : '');
+    dots.appendChild(d);
+  }
+
+  document.getElementById('q-num').textContent = `Question ${state.currentQ + 1} of ${total}`;
+  document.getElementById('q-text').textContent = q.q;
+
+  const scenarioEl = document.getElementById('q-scenario');
+  if (q.scenario) {
+    scenarioEl.style.display = 'block';
+    scenarioEl.textContent = q.scenario;
+  } else {
+    scenarioEl.style.display = 'none';
+  }
+
+  const optList = document.getElementById('options-list');
+  optList.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => selectAnswer(i));
+    optList.appendChild(btn);
+  });
+
+  document.getElementById('feedback-area').innerHTML = '';
+  document.getElementById('quiz-next-btn').style.display = 'none';
+  document.getElementById('quiz-inner').scrollTop = 0;
+}
+
+function selectAnswer(i) {
+  const q = state.currentQuiz[state.currentQ];
+  const correct = q.correct;
+  const btns = document.querySelectorAll('.option-btn');
+
+  btns.forEach(b => b.disabled = true);
+  btns[i].classList.add(i === correct ? 'selected-correct' : 'selected-wrong');
+  if (i !== correct) btns[correct].classList.add('reveal-correct');
+
+  state.answers.push({ chosen: i, correct: correct, isRight: i === correct });
+
+  const fb = document.createElement('div');
+  fb.className = `feedback-box ${i === correct ? 'correct' : 'wrong'}`;
+  fb.innerHTML = `
+    <div class="fb-label">${i === correct ? '✓ Correct' : '✗ Incorrect'}</div>
+    <p>${q.feedback}</p>
+  `;
+  document.getElementById('feedback-area').appendChild(fb);
+
+  const nextBtn = document.getElementById('quiz-next-btn');
+  const isLast = state.currentQ === state.currentQuiz.length - 1;
+  nextBtn.textContent = isLast ? 'See Results' : 'Next Question →';
+  nextBtn.style.display = 'block';
+}
+
+document.getElementById('quiz-next-btn').addEventListener('click', () => {
+  state.currentQ++;
+  if (state.currentQ < state.currentQuiz.length) {
+    renderQuestion();
+  } else {
+    showResults();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════════════════════
+function showResults() {
+  const correct = state.answers.filter(a => a.isRight).length;
+  const total = state.answers.length;
+  const pct = Math.round((correct / total) * 100);
+
+  if (pct === 100) markCompleted(state.currentUnit.id);
+
+  document.getElementById('results-icon').textContent = pct >= 70 ? '🎯' : '📚';
+  document.getElementById('results-score').textContent = `${correct}/${total}`;
+  document.getElementById('results-label').textContent =
+    pct === 100 ? 'Perfect — unit complete!' :
+    pct >= 70  ? 'Good work — review the misses below.' :
+                 'Review the lessons and try again.';
+
+  const rows = document.getElementById('result-rows');
+  rows.innerHTML = '';
+  state.currentQuiz.forEach((q, i) => {
+    const a = state.answers[i];
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    row.innerHTML = `
+      <span class="rr-q">${q.q.length > 70 ? q.q.slice(0, 70) + '…' : q.q}</span>
+      <span class="rr-mark">${a.isRight ? '✅' : '❌'}</span>
+    `;
+    rows.appendChild(row);
+  });
+
+  showScreen('results-screen');
+}
+
+document.getElementById('btn-retry').addEventListener('click', () => {
+  startQuiz();
+});
+
+document.getElementById('btn-back-home').addEventListener('click', () => {
+  renderHome();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// MENU
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('menu-btn').addEventListener('click', () => {
+  document.getElementById('menu-overlay').classList.add('open');
+});
+document.getElementById('menu-close-btn').addEventListener('click', () => {
+  document.getElementById('menu-overlay').classList.remove('open');
+});
+document.getElementById('menu-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('menu-overlay')) {
+    document.getElementById('menu-overlay').classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+renderHome();
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+
+</body>
+</html>
