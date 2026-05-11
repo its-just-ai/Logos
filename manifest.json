@@ -2,20 +2,20 @@
   "name": "Logos — A Learning App",
   "short_name": "Logos",
   "description": "Evidence-based learning for adults",
-  "start_url": "/logos/index.html",
-  "scope": "/logos/",
+  "start_url": "/Logos/index.html",
+  "scope": "/Logos/",
   "display": "standalone",
   "background_color": "#0f1117",
   "theme_color": "#0f1117",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/Logos/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "/Logos/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
